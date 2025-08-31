@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Лист персонажа D&D 5e (офлайн)</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --ink:#eef2ff; --muted:#aab3cf;
+    --accent:#7aa2ff; --line:#2a2f3a; --good:#6be675; --bad:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font:16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Helvetica Neue", sans-serif;
+    color:var(--ink); background:linear-gradient(180deg,#0d1016, #0a0d12 100%);
+  }
+  header{
+    padding:20px; border-bottom:1px solid var(--line); background:#0e1218;
+    position:sticky; top:0; z-index:10;
+  }
+  header h1{margin:0 0 8px; font-size:20px}
+  header .row{display:flex; gap:10px; flex-wrap:wrap}
+  main{padding:18px; max-width:1200px; margin:0 auto}
+  .grid{display:grid; gap:16px}
+  @media (min-width:900px){
+    .grid{grid-template-columns: 270px 1fr 330px}
+  }
+  section, .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px;
+  }
+  h2{margin:0 0 12px; font-size:18px}
+  h3{margin:16px 0 8px; font-size:15px; color:var(--muted)}
+  label{display:block; font-size:12px; color:var(--muted); margin:10px 0 6px}
+  input[type="text"], input[type="number"], textarea, select{
+    width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--line);
+    background:#0f131b; color:var(--ink); outline:none;
+  }
+  input[readonly]{background:#0c1016; color:#cfe1ff}
+  textarea{min-height:90px; resize:vertical}
+  .row{display:flex; gap:10px}
+  .col{flex:1}
+  .ability{display:grid; grid-template-columns: 1fr auto; align-items:center; gap:8px; margin-bottom:10px}
+  .ability .score{font-size:24px; font-weight:700}
+  .circle{
+    width:56px;height:56px;border-radius:50%; display:flex; align-items:center; justify-content:center;
+    border:2px solid var(--accent); font-weight:700; background:#0c1118;
+  }
+  .pill{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:#0f141c; font-size:12px}
+  .skills table{width:100%; border-collapse:collapse}
+  .skills th, .skills td{padding:6px 8px; border-bottom:1px dashed #222835; font-size:14px}
+  .skills th{position:sticky; top:56px; background:var(--panel); z-index:5}
+  .skills input[type="checkbox"]{transform:scale(1.2)}
+  .statbar{display:grid; grid-template-columns: repeat(3,1fr); gap:10px}
+  .tiny{font-size:12px; color:var(--muted)}
+  .btn{
+    cursor:pointer; padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:#121824; color:var(--ink)
+  }
+  .btn.primary{border-color:transparent; background:linear-gradient(90deg, #5a7cff, #8aa8ff)}
+  .inline{display:inline-flex; gap:8px; align-items:center}
+  .danger{color:var(--bad)}
+  .success{color:var(--good)}
+  .attacks table{width:100%; border-collapse:collapse}
+  .attacks th, .attacks td{padding:6px 8px; border-bottom:1px dashed #222835}
+  .chips{display:flex; flex-wrap:wrap; gap:6px}
+  .chip{border:1px solid var(--line); border-radius:999px; padding:4px 8px; font-size:12px; background:#0f141c}
+  .footer-note{margin-top:6px; font-size:12px; color:var(--muted)}
+  .spells input[type="number"]{max-width:90px}
+  .savebar{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  .savebar .dot input{width:18px; height:18px}
+  .right-rail section{margin-bottom:16px}
+  .kbd{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; padding:2px 6px; border:1px solid var(--line); border-radius:6px; background:#0f141c}
+</style>
+</head>
+<body>
+<header>
+  <h1>D&D 5e — Лист персонажа (локально, с автосохранением)</h1>
+  <div class="row">
+    <button class="btn primary" id="exportBtn">Экспорт JSON</button>
+    <label class="btn" for="importFile">Импорт JSON<input id="importFile" type="file" accept="application/json" style="display:none"></label>
+    <button class="btn" id="resetBtn" title="Очистить все поля">Сбросить</button>
+    <span class="tiny">Данные сохраняются автоматически в браузере (localStorage).</span>
+  </div>
+</header>
+
+<main class="grid">
+  <!-- Левая колонка -->
+  <section>
+    <h2>Основная информация</h2>
+    <div class="row">
+      <div class="col">
+        <label>Имя персонажа</label>
+        <input data-bind="name" type="text" placeholder="Например, Брандор Сталерук">
+      </div>
+      <div class="col">
+        <label>Игрок</label>
+        <input data-bind="player" type="text" placeholder="Ваше имя">
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <label>Класс & Уровень</label>
+        <input data-bind="classlevel" type="text" placeholder="Воин 3">
+      </div>
+      <div class="col">
+        <label>Предыстория</label>
+        <input data-bind="background" type="text" placeholder="Солдат">
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <label>Раса</label>
+        <input data-bind="race" type="text" placeholder="Человек">
+      </div>
+      <div class="col">
+        <label>Мировоззрение</label>
+        <input data-bind="alignment" type="text" placeholder="НД/ХД и т.п.">
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <label>Уровень (для расчётов)</label>
+        <input data-bind="level" type="number" min="1" max="20" value="1">
+      </div>
+      <div class="col">
+        <label>Бонус мастерства (авто)</label>
+        <input data-bind="profBonus" type="number" readonly>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <label>Опыт</label>
+        <input data-bind="xp" type="number" min="0" step="1">
+      </div>
+      <div class="col">
+        <label>Инициатива (авто)</label>
+        <input data-bind="initiative" type="text" readonly>
+      </div>
+    </div>
+  </section>
+
+  <!-- Центр -->
+  <section>
+    <h2>Характеристики</h2>
+    <div class="row">
+      <div class="col">
+        <div class="ability">
+          <div>
+            <label>СИЛ (STR)</label>
+            <input data-bind="str" type="number" min="1" max="30" value="10" class="score">
+          </div>
+          <div class="circle"><span data-bind="str_mod">+0</span></div>
+        </div>
+        <div class="ability">
+          <div>
+            <label>ЛОВ (DEX)</label>
+            <input data-bind="dex" type="number" min="1" max="30" value="10" class="score">
+          </div>
+          <div class="circle"><span data-bind="dex_mod">+0</span></div>
+        </div>
+        <div class="ability">
+          <div>
+            <label>ТЕЛ (CON)</label>
+            <input data-bind="con" type="number" min="1" max="30" value="10" class="score">
+          </div>
+          <div class="circle"><span data-bind="con_mod">+0</span></div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="ability">
+          <div>
+            <label>ИНТ (INT)</label>
+            <input data-bind="int" type="number" min="1" max="30" value="10" class="score">
+          </div>
+          <div class="circle"><span data-bind="int_mod">+0</span></div>
+        </div>
+        <div class="ability">
+          <div>
+            <label>МДР (WIS)</label>
+            <input data-bind="wis" type="number" min="1" max="30" value="10" class="score">
+          </div>
+          <div class="circle"><span data-bind="wis_mod">+0</span></div>
+        </div>
+        <div class="ability">
+          <div>
+            <label>ХАР (CHA)</label>
+            <input data-bind="cha" type="number" min="1" max="30" value="10" class="score">
+          </div>
+          <div class="circle"><span data-bind="cha_mod">+0</span></div>
+        </div>
+      </div>
+      <div class="col">
+        <h3>Боевые параметры</h3>
+        <div class="statbar">
+          <div>
+            <label>Класс брони (AC)</label>
+            <input data-bind="ac" type="number" min="0" value="10">
+          </div>
+          <div>
+            <label>Скорость (фут/раунд)</label>
+            <input data-bind="speed" type="number" min="0" value="30">
+          </div>
+          <div>
+            <label>Пассивная внимательность (авто)</label>
+            <input data-bind="passivePerception" type="number" readonly>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div class="col">
+            <label>Кость Хитов</label>
+            <input data-bind="hitDice" type="text" placeholder="1d10">
+          </div>
+          <div class="col">
+            <label>Макс. Хиты</label>
+            <input data-bind="hpMax" type="number" min="0" value="10">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col">
+            <label>Текущие Хиты</label>
+            <input data-bind="hpCurr" type="number" min="0" value="10">
+          </div>
+          <div class="col">
+            <label>Временные Хиты</label>
+            <input data-bind="hpTemp" type="number" min="0" value="0">
+          </div>
+        </div>
+        <h3>Спасброски</h3>
+        <div class="chips">
+          <!-- Список генерируется скриптом -->
+        </div>
+        <div class="footer-note">Отметьте проф. владение спасброском — модификатор пересчитается.</div>
+
+        <h3 style="margin-top:14px">Броски против смерти</h3>
+        <div class="savebar">
+          <span class="tiny">Успехи:</span>
+          <label class="dot"><input data-bind="deathSaveSucc1" type="checkbox"></label>
+          <label class="dot"><input data-bind="deathSaveSucc2" type="checkbox"></label>
+          <label class="dot"><input data-bind="deathSaveSucc3" type="checkbox"></label>
+          <span class="tiny" style="margin-left:10px">Провалы:</span>
+          <label class="dot"><input data-bind="deathSaveFail1" type="checkbox"></label>
+          <label class="dot"><input data-bind="deathSaveFail2" type="checkbox"></label>
+          <label class="dot"><input data-bind="deathSaveFail3" type="checkbox"></label>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:6px">Навыки</h3>
+    <div class="skills">
+      <table>
+        <thead>
+          <tr><th>Проф.</th><th>Эксп.</th><th>Навык</th><th>Сила</th><th>Бонус</th></tr>
+        </thead>
+        <tbody id="skillsBody"></tbody>
+      </table>
+      <div class="footer-note">Бонус = модификатор характеристики + (бонус мастерства × 1/2/2 при соотв. флагах). Полупроф. даёт ×0.5 (например, бардическая «Универсальная компетентность»).</div>
+    </div>
+
+    <h3 style="margin-top:16px">Атаки и заклинания</h3>
+    <div class="attacks">
+      <table id="attacksTable">
+        <thead><tr><th>Название</th><th>Бонус атаки</th><th>Урон/Тип</th><th>Примечание</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <button class="btn" id="addAttack">+ Добавить атаку</button>
+    </div>
+
+    <h3 style="margin-top:16px">Снаряжение</h3>
+    <textarea data-bind="equipment" placeholder="Золото, предметы, снаряжение..."></textarea>
+  </section>
+
+  <!-- Правая колонка -->
+  <div class="right-rail">
+    <section class="card">
+      <h2>Черты и умения</h2>
+      <textarea data-bind="features" placeholder="Особенности расы, класса, фиты, владения..."></textarea>
+    </section>
+
+    <section class="card spells">
+      <h2>Заклинания</h2>
+      <div class="row">
+        <div class="col">
+          <label>Баз. харизма/мудрость/интеллект (для заклинаний)</label>
+          <select data-bind="castingStat">
+            <option value="int">ИНТ</option>
+            <option value="wis">МДР</option>
+            <option value="cha">ХАР</option>
+          </select>
+        </div>
+        <div class="col">
+          <label>Модиф. закл. (авто)</label>
+          <input data-bind="spellMod" type="text" readonly>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <label>Бонус к атаке закл. (авто)</label>
+          <input data-bind="spellAttack" type="text" readonly>
+        </div>
+        <div class="col">
+          <label>Сложность спасброска (DC) (авто)</label>
+          <input data-bind="spellDC" type="number" readonly>
+        </div>
+      </div>
+      <h3>Ячейки</h3>
+      <div class="row">
+        <div class="col"><label>Ур.1 — всего</label><input data-bind="slots1" type="number" min="0"></div>
+        <div class="col"><label>Ур.1 — расход</label><input data-bind="slots1_used" type="number" min="0"></div>
+      </div>
+      <div class="row">
+        <div class="col"><label>Ур.2 — всего</label><input data-bind="slots2" type="number" min="0"></div>
+        <div class="col"><label>Ур.2 — расход</label><input data-bind="slots2_used" type="number" min="0"></div>
+      </div>
+      <div class="row">
+        <div class="col"><label>Ур.3 — всего</label><input data-bind="slots3" type="number" min="0"></div>
+        <div class="col"><label>Ур.3 — расход</label><input data-bind="slots3_used" type="number" min="0"></div>
+      </div>
+      <label>Известные/подготовленные заклинания</label>
+      <textarea data-bind="spellsList" placeholder="Список заклинаний..."></textarea>
+    </section>
+
+    <section class="card">
+      <h2>Личность</h2>
+      <label>Черты характера</label><textarea data-bind="personality"></textarea>
+      <label>Идеалы</label><textarea data-bind="ideals"></textarea>
+      <label>Привязанности</label><textarea data-bind="bonds"></textarea>
+      <label>Слабости</label><textarea data-bind="flaws"></textarea>
+    </section>
+
+    <section class="card">
+      <h2>Заметки</h2>
+      <textarea data-bind="notes" placeholder="Любые дополнительные записи..."></textarea>
+      <div class="footer-note">Подсказка: жмите <span class="kbd">Ctrl/Cmd+S</span> чтобы вручную сохранить в localStorage.</div>
+    </section>
+  </div>
+</main>
+
+<script>
+(function(){
+  // --- Модель данных ---
+  const state = {
+    name:"", player:"", classlevel:"", background:"", race:"", alignment:"",
+    level:1, xp:0, ac:10, speed:30, hitDice:"1d8",
+    hpMax:10, hpCurr:10, hpTemp:0,
+    str:10, dex:10, con:10, int:10, wis:10, cha:10,
+    profBonus:2, // авто из уровня
+    initiative:"+0", passivePerception:10,
+    // death saves:
+    deathSaveSucc1:false, deathSaveSucc2:false, deathSaveSucc3:false,
+    deathSaveFail1:false, deathSaveFail2:false, deathSaveFail3:false,
+    // saving throws proficiency flags:
+    saveProf: { str:false, dex:false, con:false, int:false, wis:false, cha:false },
+    // skills
+    skills:{},
+    // text blocks
+    equipment:"", features:"", personality:"", ideals:"", bonds:"", flaws:"", notes:"",
+    // spells
+    castingStat:"int", spellMod:"+0", spellAttack:"+0", spellDC:8,
+    slots1:0, slots1_used:0, slots2:0, slots2_used:0, slots3:0, slots3_used:0, spellsList:"",
+    // attacks
+    attacks:[]
+  };
+
+  // Конфигурации
+  const abilOrder = ["str","dex","con","int","wis","cha"];
+  const abilName = {str:"СИЛ", dex:"ЛОВ", con:"ТЕЛ", int:"ИНТ", wis:"МДР", cha:"ХАР"};
+  const skills = [
+    ["Акробатика","dex"],["Анализ","int"],["Атлетика","str"],["Выживание","wis"],["Выступление","cha"],
+    ["Запугивание","cha"],["История","int"],["Ловкость рук","dex"],["Магия","int"],["Медицина","wis"],
+    ["Проницательность","wis"],["Природа","int"],["Религия","int"],["Скрытность","dex"],
+    ["Убеждение","cha"],["Уход за животными","wis"],["Внимательность (Perception)","wis"]
+  ];
+
+  const STORAGE_KEY = "dnd5e.sheet.v1";
+
+  // --- Утилиты ---
+  const el = sel => document.querySelector(sel);
+  const els = sel => Array.from(document.querySelectorAll(sel));
+
+  function modOf(score){ return Math.floor((Number(score||0)-10)/2); }
+  function fmtMod(n){ return (n>=0?"+":"") + n; }
+  function profByLevel(lv){
+    lv = Number(lv||1);
+    if(lv>=17) return 6;
+    if(lv>=13) return 5;
+    if(lv>=9) return 4;
+    if(lv>=5) return 3;
+    return 2;
+  }
+
+  // --- Генерация UI динамических частей ---
+  // 1) Спасброски-чипсы
+  const saveChipsWrap = document.querySelector(".chips");
+  abilOrder.forEach(ab=>{
+    const chip = document.createElement("label");
+    chip.className = "chip";
+    chip.innerHTML = `<input type="checkbox" data-saveprof="${ab}"> ${abilName[ab]} спасбросок <span class="tiny" style="margin-left:6px" data-savemod="${ab}">(+0)</span>`;
+    saveChipsWrap.appendChild(chip);
+  });
+
+  // 2) Таблица навыков
+  const skillsBody = document.getElementById("skillsBody");
+  skills.forEach(([name,ab],i)=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="text-align:center"><input type="checkbox" data-skill-prof="${i}"></td>
+      <td style="text-align:center"><input type="checkbox" data-skill-expert="${i}" title="Экспертиза (×2)"></td>
+      <td>${name}</td>
+      <td>${abilName[ab]}</td>
+      <td><span data-skill-bonus="${i}">+0</span></td>
+    `;
+    skillsBody.appendChild(tr);
+    state.skills[i] = {prof:false, expert:false, half:false, ab};
+  });
+
+  // 3) Таблица атак
+  const attacksTableBody = document.querySelector("#attacksTable tbody");
+  function addAttackRow(a = {name:"", atk:"", dmg:"", note:""}){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><input type="text" data-attack="name" value="${a.name||""}" placeholder="Короткий меч"></td>
+      <td><input type="text" data-attack="atk" value="${a.atk||""}" placeholder="+5"></td>
+      <td><input type="text" data-attack="dmg" value="${a.dmg||""}" placeholder="1d6+3 кол."></td>
+      <td><input type="text" data-attack="note" value="${a.note||""}" placeholder="Финт, двуруч. и т.д."></td>
+      <td><button class="btn danger" data-remove-attack>✕</button></td>
+    `;
+    attacksTableBody.appendChild(tr);
+    // синк в state
+    const row = { name:a.name, atk:a.atk, dmg:a.dmg, note:a.note };
+    state.attacks.push(row);
+
+    tr.querySelectorAll('input[data-attack]').forEach(inp=>{
+      inp.addEventListener('input', ()=>{
+        const idx = Array.from(attacksTableBody.children).indexOf(tr);
+        if(idx>=0 && state.attacks[idx]){
+          state.attacks[idx][inp.dataset.attack] = inp.value;
+          autosave();
+        }
+      });
+    });
+    tr.querySelector('[data-remove-attack]').addEventListener('click', ()=>{
+      const idx = Array.from(attacksTableBody.children).indexOf(tr);
+      if(idx>=0){
+        state.attacks.splice(idx,1);
+        tr.remove();
+        autosave();
+      }
+    });
+  }
+  document.getElementById("addAttack").addEventListener("click", ()=>{
+    addAttackRow();
+    autosave();
+  });
+
+  // --- Привязка инпутов ---
+  els("[data-bind]").forEach(inp=>{
+    const key = inp.dataset.bind;
+    // начальное значение из state
+    if(state.hasOwnProperty(key)){
+      if(typeof state[key] === "boolean") inp.checked = state[key];
+      else inp.value = state[key];
+    }
+    const handler = ()=>{
+      const val = (inp.type==="checkbox") ? inp.checked : inp.value;
+      state[key] = (inp.type==="number") ? Number(val) : val;
+      recalc();
+      autosave();
+    };
+    inp.addEventListener("input", handler);
+    inp.addEventListener("change", handler);
+  });
+
+  // Отдельные чекбоксы спасбросков
+  els("[data-saveprof]").forEach(cb=>{
+    const ab = cb.dataset.saveprof;
+    cb.addEventListener("change", ()=>{
+      state.saveProf[ab] = cb.checked;
+      recalc();
+      autosave();
+    });
+  });
+
+  // Навыки — флаги и автообновление
+  els("[data-skill-prof]").forEach(cb=>{
+    const i = cb.dataset.skillProf;
+    cb.addEventListener("change", ()=>{
+      state.skills[i].prof = cb.checked;
+      recalc(); autosave();
+    });
+  });
+  els("[data-skill-expert]").forEach(cb=>{
+    const i = cb.dataset.skillExpert;
+    cb.addEventListener("change", ()=>{
+      state.skills[i].expert = cb.checked;
+      recalc(); autosave();
+    });
+  });
+
+  // --- Пересчёт производных ---
+  function setTextBind(key, text){ const node = document.querySelector(`[data-bind="${key}"]`); if(node) node.value = text; }
+  function setSpanBind(key, text){ const node = document.querySelector(`[data-bind="${key}"]`); if(node) node.textContent = text; }
+
+  function recalc(){
+    // proficiency
+    state.profBonus = profByLevel(state.level);
+    setTextBind("profBonus", state.profBonus);
+
+    // ability modifiers
+    const mods = {};
+    abilOrder.forEach(ab=>{
+      const m = modOf(state[ab]);
+      mods[ab] = m;
+      setSpanBind(`${ab}_mod`, fmtMod(m));
+    });
+
+    // initiative from DEX
+    state.initiative = fmtMod(mods.dex);
+    setTextBind("initiative", state.initiative);
+
+    // saving throws display
+    abilOrder.forEach(ab=>{
+      const bonus = mods[ab] + (state.saveProf[ab] ? state.profBonus : 0);
+      const node = document.querySelector(`[data-savemod="${ab}"]`);
+      if(node) node.textContent = `(${fmtMod(bonus)})`;
+    });
+
+    // skills
+    skills.forEach((sk, i)=>{
+      const ab = state.skills[i].ab;
+      let bonus = mods[ab];
+      if(state.skills[i].expert) bonus += state.profBonus*2;
+      else if(state.skills[i].prof) bonus += state.profBonus;
+      // (опционально можно добавить полупроф: bonus += Math.floor(state.profBonus/2))
+      const cell = document.querySelector(`[data-skill-bonus="${i}"]`);
+      if(cell) cell.textContent = fmtMod(bonus);
+    });
+
+    // passive perception (wis + proficiency if proficient in Perception)
+    const percIndex = skills.findIndex(s=>s[0].includes("Внимательность"));
+    const percAb = state.skills[percIndex].ab;
+    let percBonus = mods[percAb] + (state.skills[percIndex].expert ? state.profBonus*2 : state.skills[percIndex].prof ? state.profBonus : 0);
+    state.passivePerception = 10 + percBonus;
+    setTextBind("passivePerception", state.passivePerception);
+
+    // spellcasting
+    const spMod = mods[state.castingStat] || 0;
+    state.spellMod = fmtMod(spMod);
+    state.spellAttack = fmtMod(spMod + state.profBonus);
+    state.spellDC = 8 + state.profBonus + spMod;
+    setTextBind("spellMod", state.spellMod);
+    setTextBind("spellAttack", state.spellAttack);
+    setTextBind("spellDC", state.spellDC);
+  }
+
+  // --- Сохранение/Загрузка ---
+  function autosave(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }catch(e){ console.warn("Не удалось сохранить:", e); }
+  }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return;
+      const data = JSON.parse(raw);
+      Object.assign(state, data);
+      // Восстановление элементарных полей
+      els("[data-bind]").forEach(inp=>{
+        const key = inp.dataset.bind;
+        if(state.hasOwnProperty(key)){
+          if(inp.type==="checkbox") inp.checked = !!state[key];
+          else inp.value = state[key];
+        }
+      });
+      // Чипсы спасбросков
+      els("[data-saveprof]").forEach(cb=>{
+        const ab = cb.dataset.saveprof;
+        cb.checked = !!(state.saveProf && state.saveProf[ab]);
+      });
+      // Навыки
+      els("[data-skill-prof]").forEach(cb=>{
+        const i = cb.dataset.skillProf;
+        cb.checked = !!(state.skills && state.skills[i] && state.skills[i].prof);
+      });
+      els("[data-skill-expert]").forEach(cb=>{
+        const i = cb.dataset.skillExpert;
+        cb.checked = !!(state.skills && state.skills[i] && state.skills[i].expert);
+      });
+      // Атаки
+      attacksTableBody.innerHTML = "";
+      (state.attacks||[]).forEach(addAttackRow);
+      recalc();
+    }catch(e){ console.warn("Не удалось загрузить:", e); }
+  }
+
+  // Экспорт / Импорт / Сброс
+  document.getElementById("exportBtn").addEventListener("click", ()=>{
+    const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = (state.name||"character") + "_dnd5e.json";
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById("importFile").addEventListener("change", async (ev)=>{
+    const file = ev.target.files[0];
+    if(!file) return;
+    const text = await file.text();
+    try{
+      const data = JSON.parse(text);
+      // осторожно объединяем, чтобы не потерять структуру
+      Object.assign(state, data);
+      autosave(); load();
+    }catch(e){
+      alert("Ошибка импорта: " + e.message);
+    } finally {
+      ev.target.value = "";
+    }
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", ()=>{
+    if(confirm("Очистить все поля и localStorage?")){
+      localStorage.removeItem(STORAGE_KEY);
+      location.reload();
+    }
+  });
+
+  // Сочетание Ctrl/Cmd+S для принудительного сохранения
+  window.addEventListener("keydown", (e)=>{
+    if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="s"){
+      e.preventDefault();
+      autosave();
+      const btn = document.getElementById("exportBtn");
+      btn.classList.add("success"); setTimeout(()=>btn.classList.remove("success"), 400);
+    }
+  });
+
+  // Инициализация
+  load(); // загрузим, если есть
+  recalc(); // и посчитаем на старте
+})();
+</script>
+</body>
+</html>
